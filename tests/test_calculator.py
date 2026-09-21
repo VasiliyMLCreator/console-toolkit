@@ -35,6 +35,18 @@ def test_chain():
     assert calculate("1+2+3*4-5") == 10.0
 
 
+def test_parentheses():
+    assert calculate("(2+3)*4") == 20.0
+
+
+def test_nested_parentheses():
+    assert calculate("((1+2)*3)-4") == 5.0
+
+
+def test_unary_with_paren():
+    assert calculate("-(2+3)") == -5.0
+
+
 def test_empty():
     with pytest.raises(CalculatorError):
         calculate("")
@@ -63,6 +75,11 @@ def test_missing_operand():
 def test_start_op():
     with pytest.raises(CalculatorError):
         calculate("*2")
+
+
+def test_mismatched_paren():
+    with pytest.raises(CalculatorError):
+        calculate("(2+3")
 
 
 def test_tokenize_validate():

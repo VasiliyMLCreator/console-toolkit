@@ -12,7 +12,7 @@ def tokenize(expression: str) -> list:
         if c.isspace():
             i += 1
             continue
-        if c in "+-*/":
+        if c in "+-*/()":
             tokens.append(c)
             i += 1
             continue
@@ -43,6 +43,7 @@ def tokenize(expression: str) -> list:
 def validate(tokens: list) -> None:
     if not tokens:
         raise CalculatorError("empty expression")
+    balance = 0
     i = 0
     expect_operand = True
     while i < len(tokens):
@@ -53,16 +54,26 @@ def validate(tokens: list) -> None:
                 i += 1
             elif isinstance(token, str) and token in "+-":
                 i += 1
+            elif token == "(":
+                balance += 1
+                i += 1
             else:
                 raise CalculatorError("missing operand")
         else:
             if isinstance(token, str) and token in "+-*/":
                 expect_operand = True
                 i += 1
+            elif token == ")":
+                balance -= 1
+                if balance < 0:
+                    raise CalculatorError("mismatched parentheses")
+                i += 1
             else:
                 raise CalculatorError("missing operator")
     if expect_operand:
         raise CalculatorError("missing operand")
+    if balance != 0:
+        raise CalculatorError("mismatched parentheses")
 
 
 def _to_rpn(tokens: list) -> list:
@@ -75,6 +86,16 @@ def _to_rpn(tokens: list) -> list:
         if isinstance(token, (int, float)):
             output.append(token)
             i += 1
+        elif token == "(":
+            stack.append(token)
+            i += 1
+        elif token == ")":
+            while stack and stack[-1] != "(":
+                output.append(stack.pop())
+            if not stack:
+                raise CalculatorError("mismatched parentheses")
+            stack.pop()
+            i += 1
         elif isinstance(token, str) and token in "+-*/":
             is_unary = False
             if token in "+-":
@@ -82,7 +103,7 @@ def _to_rpn(tokens: list) -> list:
                     is_unary = True
                 else:
                     prev = tokens[i - 1]
-                    if isinstance(prev, str) and prev in "+-*/":
+                    if isinstance(prev, str) and prev in "+-*/(":
                         is_unary = True
             if is_unary:
                 op = "u" + token
@@ -98,6 +119,8 @@ def _to_rpn(tokens: list) -> list:
         else:
             raise CalculatorError("invalid token")
     while stack:
+        if stack[-1] == "(":
+            raise CalculatorError("mismatched parentheses")
         output.append(stack.pop())
     return output
 
