@@ -1,6 +1,6 @@
 import pytest
-from toolkit.converter import convert
-from toolkit.errors import ConverterError
+from src.converter import convert
+from src.errors import ConverterError
 
 
 def test_length_mm_to_m():

@@ -1,11 +1,13 @@
-# Шкуратов Василий Сергеевич (М8О-101БВ-26) - Console toolkit
+# Шкуратов Василий Сергеевич (М8О-101БВ-26) — Console toolkit
 
-Консольный набор утилит
+Консольный набор утилит для вычислений и перевода единиц измерения.
 
 ## Установка
 
 ```bash
-pip install -e .
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
 ```
 
 ## Использование
@@ -13,27 +15,31 @@ pip install -e .
 Калькулятор:
 
 ```bash
-python -m toolkit calc "2+3*4"
+python -m src calc "2+3*4"
 ```
 
 Конвертер:
 
 ```bash
-python -m toolkit convert 1000 --from mm --to m
+python -m src convert 1000 --from mm --to m
 ```
 
 Справка:
 
 ```bash
-python -m toolkit --help
+python -m src --help
 ```
+
+После установки также доступна команда `toolkit`.
 
 ## Структура
 
-- src/toolkit/calculator.py - калькулятор
-- src/toolkit/converter.py - конвертер
-- src/toolkit/errors.py - ошибки
-- tests/ - тесты
+- `src/main.py` — точка входа и обработка аргументов
+- `src/calculator.py` — вычисление арифметических выражений
+- `src/converter.py` — перевод единиц измерения
+- `src/constants.py` — константы
+- `src/errors.py` — ошибки приложения
+- `tests/` — тесты
 
 ## Тесты
 
