@@ -1,6 +1,6 @@
 import pytest
-from toolkit.calculator import calculate, tokenize, validate
-from toolkit.errors import CalculatorError
+from src.calculator import calculate, tokenize, validate
+from src.errors import CalculatorError
 
 
 def test_simple_add():

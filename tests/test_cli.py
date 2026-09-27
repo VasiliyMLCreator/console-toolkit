@@ -1,17 +1,13 @@
-import os
 import subprocess
 import sys
 
 
 def _run(args):
-    env = os.environ.copy()
-    env["PYTHONPATH"] = "src"
     return subprocess.run(
-        [sys.executable, "-m", "toolkit"] + args,
+        [sys.executable, "-m", "src"] + args,
         capture_output=True,
         text=True,
         cwd=".",
-        env=env,
     )
 
 
