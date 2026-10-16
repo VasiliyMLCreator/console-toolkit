@@ -1,0 +1,56 @@
+{
+    "length": {
+        "mm": {
+            "numerator": "0.001",
+            "denominator": "1",
+            "offset": "0"
+        },
+        "cm": {
+            "numerator": "0.01",
+            "denominator": "1",
+            "offset": "0"
+        },
+        "m": {
+            "numerator": "1",
+            "denominator": "1",
+            "offset": "0"
+        },
+        "km": {
+            "numerator": "1000",
+            "denominator": "1",
+            "offset": "0"
+        }
+    },
+    "mass": {
+        "g": {
+            "numerator": "0.001",
+            "denominator": "1",
+            "offset": "0"
+        },
+        "kg": {
+            "numerator": "1",
+            "denominator": "1",
+            "offset": "0"
+        }
+    },
+    "temperature": {
+        "c": {
+            "numerator": "1",
+            "denominator": "1",
+            "offset": "0",
+            "minimum": "-273.15"
+        },
+        "f": {
+            "numerator": "5",
+            "denominator": "9",
+            "offset": "32",
+            "minimum": "-459.67"
+        },
+        "k": {
+            "numerator": "1",
+            "denominator": "1",
+            "offset": "273.15",
+            "minimum": "0"
+        }
+    }
+}
