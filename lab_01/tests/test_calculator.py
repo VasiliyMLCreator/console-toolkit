@@ -34,12 +34,7 @@ from toolkit.errors import ErrorInCorrectnessOfNumericExpression
     ]
 )
 def test_calculation(expression: str, expected: str) -> None:
-    """Проверяет правильные выражения из таблицы примеров.
-
-    pytest передаёт expression и ожидаемый результат expected для каждого
-    примера. Тест вызывает калькулятор напрямую и проверяет, что получено
-    именно число Decimal с нужным значением.
-    """
+    """Выражения из таблицы дают ожидаемый Decimal."""
     result = Calculator()(expression)
 
     assert isinstance(result, Decimal)
@@ -52,11 +47,7 @@ def test_calculation(expression: str, expected: str) -> None:
      "1 2", "()", "(1+2", "1+2)", "2(3)", "(2)3", "(1+)2", "1e3"]
 )
 def test_invalid_expression(expression: str) -> None:
-    """Проверяет, что калькулятор отклоняет неправильную запись выражения.
-
-    expression берётся из списка ошибочных примеров над функцией.
-    Тест ожидает ErrorInCorrectnessOfNumericExpression. Если калькулятор
-    не вызовет эту ошибку, проверка не пройдёт.
+    """Неправильная запись выражения даёт ErrorInCorrectnessOfNumericExpression.
     """
     with pytest.raises(ErrorInCorrectnessOfNumericExpression):
         Calculator()(expression)
@@ -64,21 +55,17 @@ def test_invalid_expression(expression: str) -> None:
 
 @pytest.mark.parametrize("operator", ["/", "//", "%"])
 def test_division_by_zero(operator: str) -> None:
-    """Проверяет запрет деления на ноль для трёх операций.
+    """Деление на ноль через /, // и % даёт ZeroDivisionError.
 
-    В operator pytest передаёт /, // или %. Нулевой делитель получается
-    из выражения в скобках. Для каждого варианта ожидается ZeroDivisionError.
+    Нулевой делитель получается из выражения (1 - 1).
     """
     with pytest.raises(ZeroDivisionError):
         Calculator()(f"2 {operator} (1 - 1)")
 
 
 def test_recursive_descent_produces_reverse_polish_notation() -> None:
-    """Проверяет порядок токенов после разбора выражения со скобками.
-
-    Создаёт токены, проверяет их и переводит в обратную польскую запись.
-    Сравнивает полученный порядок с заранее известным, а затем проверяет
-    результат вычисления этой записи стеком.
+    """Выражение со скобками превращается в ожидаемую обратную польскую запись, а
+    подсчёт стеком даёт верный результат.
     """
     calculator = Calculator()
     tokens = calculator._tokenization("-(2 + 3) * 4")
@@ -92,11 +79,11 @@ def test_recursive_descent_produces_reverse_polish_notation() -> None:
 
 
 def test_rounding_is_independent_of_external_context() -> None:
-    """Проверяет независимость калькулятора от внешних настроек Decimal.
+    """Калькулятор использует свои точность и округление, а не внешние настройки
+    Decimal.
 
-    Временно задаёт маленькую точность и другое округление. Проверяет,
-    что калькулятор всё равно использует свои настройки, а после вызова
-    внешняя точность и способ округления остаются прежними.
+    Для проверки временно ставятся точность 3 и ROUND_DOWN. После вызова эти
+    настройки должны остаться прежними.
     """
     with localcontext() as context:
         context.prec = 3
@@ -113,20 +100,16 @@ def test_rounding_is_independent_of_external_context() -> None:
      ("1.2345678901234567890123456795", "1.234567890123456789012345680")]
 )
 def test_half_even_rounding(expression: str, expected: str) -> None:
-    """Проверяет округление числа, находящегося ровно посередине.
+    """На ровной середине округление идёт к ближайшей чётной цифре.
 
-    expression и expected задаются в таблице примеров. В одном случае
-    последняя сохраняемая цифра должна остаться прежней, в другом —
-    увеличиться, чтобы получилась чётная цифра.
+    В одном примере последняя цифра остаётся, в другом растёт.
     """
     assert Calculator()(expression) == Decimal(expected)
 
 
 def test_excessive_nesting() -> None:
-    """Проверяет обработку слишком большого количества вложенных скобок.
-
-    Создаёт выражение с двумя тысячами пар скобок. Ожидает ошибку
-    математического выражения вместо необработанной ошибки рекурсии.
+    """Две тысячи вложенных скобок дают ошибку выражения, а не необработанный
+    RecursionError.
     """
     with pytest.raises(ErrorInCorrectnessOfNumericExpression):
         Calculator()("(" * 2000 + "1" + ")" * 2000)

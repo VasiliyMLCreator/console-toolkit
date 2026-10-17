@@ -22,11 +22,9 @@ from toolkit.errors import (
      (-273.15, "c", "k", 0.0), (-10, "m", "m", -10.0), ("1e3", "g", "kg", 1.0)]
 )
 def test_conversion(value, from_unit: str, to_unit: str, expected: float) -> None:
-    """Проверяет перевод величин по готовым примерам.
+    """Сверяет перевод с готовыми примерами.
 
-    value задаёт число, from_unit и to_unit — единицы, expected — ожидаемый
-    результат. Проверяется тип float и приблизительное равенство значений,
-    так как float не всегда хранит десятичные дроби совершенно точно.
+    Результат должен быть float и примерно равен expected.
     """
     result = Converter()(value, from_unit, to_unit)
 
@@ -36,11 +34,8 @@ def test_conversion(value, from_unit: str, to_unit: str, expected: float) -> Non
 
 @pytest.mark.parametrize("value", ["abc", "", "NaN", "Infinity", "-Infinity", None, "1e999999"])
 def test_invalid_numeric_value(value) -> None:
-    """Проверяет отказ от недопустимых числовых данных.
-
-    pytest передаёт value из списка: неверную строку, пустое значение,
-    бесконечность или слишком большое число. Каждый пример должен вызвать
-    ErrorInCorrectnessOfNumericValue при переводе метров в сантиметры.
+    """Нечисловая строка, пустое значение, бесконечность и слишком большое число
+    дают ErrorInCorrectnessOfNumericValue.
     """
     with pytest.raises(ErrorInCorrectnessOfNumericValue):
         Converter()(value, "m", "cm")
@@ -48,11 +43,7 @@ def test_invalid_numeric_value(value) -> None:
 
 @pytest.mark.parametrize(("source", "target"), [("meter", "m"), ("m", "unknown"), (None, "m")])
 def test_unknown_unit(source, target) -> None:
-    """Проверяет обработку неизвестного или неверного названия единицы.
-
-    source и target содержат исходную и конечную единицы из таблицы теста.
-    Хотя бы одна из них недопустима. Ожидается ErrorInCorrectnessOfUnit,
-    а не попытка выполнить перевод.
+    """Если хотя бы одна из единиц неизвестна, ожидается ErrorInCorrectnessOfUnit.
     """
     with pytest.raises(ErrorInCorrectnessOfUnit):
         Converter()(1, source, target)
@@ -60,11 +51,8 @@ def test_unknown_unit(source, target) -> None:
 
 @pytest.mark.parametrize(("source", "target"), [("m", "kg"), ("c", "cm"), ("g", "f")])
 def test_incompatible_units(source: str, target: str) -> None:
-    """Проверяет запрет перевода между разными группами величин.
-
-    В source и target передаются известные, но несовместимые единицы,
-    например метры и килограммы. Каждый вызов должен закончиться
-    ошибкой ErrorInCompatibilityOfUnits.
+    """Известные, но несовместимые единицы, например метры и килограммы, дают
+    ErrorInCompatibilityOfUnits.
     """
     with pytest.raises(ErrorInCompatibilityOfUnits):
         Converter()(1, source, target)
@@ -76,22 +64,19 @@ def test_incompatible_units(source: str, target: str) -> None:
      ("-273.150000000000000000000000001", "c")]
 )
 def test_absolute_zero(value: str, unit: str) -> None:
-    """Проверяет запрет температуры ниже абсолютного нуля.
+    """Температура ниже абсолютного нуля даёт ошибку, даже когда единица
+    переводится сама в себя.
 
-    value содержит недопустимую температуру, unit — её единицу.
-    Даже перевод единицы в саму себя должен вызвать ошибку температуры.
-    Один из примеров проверяет очень маленькое отклонение от границы.
+    Один из примеров лежит совсем рядом с границей.
     """
     with pytest.raises(ErrorInTemperatureBelowAbsoluteZero):
         Converter()(value, unit, unit)
 
 
 def test_custom_configuration(tmp_path: Path) -> None:
-    """Проверяет загрузку собственной таблицы единиц из файла.
+    """Конвертер берёт коэффициенты из собственной таблицы.
 
-    tmp_path — временная папка, которую предоставляет pytest.
-    В неё записывается таблица с метрами и футами. Затем проверяется,
-    что конвертер использует коэффициент из этого файла.
+    В tmp_path записывается файл с метрами и футами.
     """
     path = tmp_path / "units.json"
     path.write_text(json.dumps({"length": {
@@ -104,11 +89,8 @@ def test_custom_configuration(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize("configuration", ["broken", "[]", "{}", '{"length":{"m":{}}}'])
 def test_invalid_configuration(tmp_path: Path, configuration: str) -> None:
-    """Проверяет обработку неверного содержимого файла конфигурации.
-
-    tmp_path задаёт временную папку, configuration — текст из списка
-    ошибочных примеров. Текст записывается в файл. Создание конвертера
-    с таким файлом должно вызвать ErrorInCorrectnessOfUnit.
+    """Файл конфигурации с неверным содержимым даёт ErrorInCorrectnessOfUnit уже
+    при создании конвертера.
     """
     path = tmp_path / "units.json"
     path.write_text(configuration, encoding="utf-8")

@@ -11,21 +11,18 @@ from .errors import (
 
 
 class Converter:
-    """Переводит числовое значение из одной единицы измерения в другую.
+    """Переводит число из одной единицы в другую по таблице из JSON-файла.
 
-    Единицы и коэффициенты берутся из JSON-файла. Перевод разрешён только
-    внутри одной группы, например из метров в сантиметры. Регистр названий
-    не важен. Температура ниже абсолютного нуля считается ошибкой.
-    Готовый результат возвращается как float.
+    Перевод возможен только внутри одной группы: метры в сантиметры можно, в
+    килограммы нельзя. Регистр названий не важен. Температуру ниже абсолютного
+    нуля конвертер отвергает. Результат - float.
     """
     def __init__(self, configuration_path: str | Path | None = None) -> None:
-        """Загружает и проверяет таблицу единиц измерения.
+        """Читает и проверяет таблицу единиц.
 
-        configuration_path задаёт путь к JSON-файлу. Если путь не передан,
-        используется units.json рядом с этим модулем. Коэффициенты переводятся
-        в Decimal. Проверяются названия, обязательные поля и допустимость чисел.
-        При недоступном или неверном файле вызывается ErrorInCorrectnessOfUnit.
-        Для дальнейших вычислений задаётся точность в 28 значащих цифр.
+        Без configuration_path берётся units.json рядом с модулем. Если файл не
+        читается или в нём ошибка, бросает ErrorInCorrectnessOfUnit. Вычисления
+        идут с точностью 28 значащих цифр.
         """
         path: Path = Path(configuration_path) if configuration_path else Path(__file__).with_name(
             "units.json"
@@ -70,11 +67,10 @@ class Converter:
         self.decimal_precision: int = 28
 
     def _checking_correctness_of_numeric_value(self, value: str | float | Decimal) -> Decimal:
-        """Преобразует входное значение value в число Decimal.
+        """Превращает value в конечный Decimal.
 
-        Принимает строку или число. Сначала получает строковую запись значения,
-        затем создаёт Decimal. Возвращает только конечное число: бесконечность
-        и NaN запрещены. Неверное значение вызывает ErrorInCorrectnessOfNumericValue.
+        Всё, что не читается как число, а также бесконечность и NaN дают
+        ErrorInCorrectnessOfNumericValue.
         """
         try:
             number: Decimal = Decimal(str(value))
@@ -92,11 +88,9 @@ class Converter:
         return number
 
     def _checking_correctness_of_unit(self, unit: str) -> str:
-        """Проверяет название единицы unit и приводит его к нижнему регистру.
+        """Проверяет, что unit есть в таблице, и возвращает его в нижнем регистре.
 
-        Ищет единицу во всех группах загруженной таблицы. Если она найдена,
-        возвращает её название маленькими буквами. Если аргумент не является
-        строкой или единица неизвестна, вызывает ErrorInCorrectnessOfUnit.
+        Для нестроки или неизвестной единицы бросает ErrorInCorrectnessOfUnit.
         """
         if not isinstance(unit, str):
             raise ErrorInCorrectnessOfUnit(
@@ -114,11 +108,10 @@ class Converter:
         )
 
     def _searching_for_unit_group(self, unit: str) -> str:
-        """Находит группу для единицы измерения unit.
+        """Возвращает название группы, в которой лежит unit, например length.
 
-        Ожидает уже проверенное название в нижнем регистре. Возвращает название
-        группы, например «length» для метров. Если единицы нет в таблице,
-        вызывает ErrorInCorrectnessOfUnit.
+        unit уже в нижнем регистре. Если его нет в таблице, бросает
+        ErrorInCorrectnessOfUnit.
         """
         for group_name, group in self.units.items():
             if unit in group:
@@ -129,11 +122,9 @@ class Converter:
         )
 
     def _checking_compatibility_of_units(self, from_unit: str, to_unit: str) -> str:
-        """Проверяет, можно ли перевести from_unit в to_unit.
+        """Возвращает общую группу двух единиц.
 
-        Находит группы исходной и конечной единиц. Если группы совпадают,
-        возвращает название общей группы. Если они разные, вызывает
-        ErrorInCompatibilityOfUnits: например, метры нельзя перевести в килограммы.
+        Если группы разные, бросает ErrorInCompatibilityOfUnits.
         """
         from_group: str = self._searching_for_unit_group(from_unit)
         to_group: str = self._searching_for_unit_group(to_unit)
@@ -152,13 +143,11 @@ class Converter:
         to_unit: str,
         group: str
     ) -> Decimal:
-        """Выполняет перевод между двумя проверенными единицами.
+        """Считает перевод value из from_unit в to_unit внутри группы group.
 
-        value содержит исходное число Decimal, from_unit и to_unit — названия
-        единиц, group — их общую группу. Сначала переводит значение в базовую
-        единицу группы, затем в нужную, используя коэффициенты из таблицы.
-        Возвращает Decimal. Для температуры проверяет нижнюю границу
-        и при её нарушении вызывает ErrorInTemperatureBelowAbsoluteZero.
+        Значение сначала приводится к базовой единице группы, потом к целевой.
+        Для температуры раньше всего проверяется нижняя граница, при нарушении
+        бросается ErrorInTemperatureBelowAbsoluteZero. Возвращает Decimal.
         """
         source: dict[str, Decimal] = self.units[group][from_unit]
         target: dict[str, Decimal] = self.units[group][to_unit]
@@ -182,14 +171,11 @@ class Converter:
         from_unit: str,
         to_unit: str
     ) -> float:
-        """Проверяет данные и возвращает результат конвертации как float.
+        """Проверяет аргументы, считает перевод и возвращает float.
 
-        Принимает значение value, исходную единицу from_unit и конечную to_unit.
-        Проверяет число, названия и совместимость единиц. Вычисляет результат
-        через Decimal с точностью 28 цифр и округлением к ближайшей чётной цифре
-        при равном расстоянии. Переполнение и ошибки Decimal превращает
-        в ErrorInCorrectnessOfNumericValue. Ошибки единиц и температуры
-        передаются вызывающему коду.
+        Вычисления идут в Decimal с точностью 28 цифр и округлением к ближайшей
+        чётной (ROUND_HALF_EVEN). Переполнение и сбои Decimal превращаются в
+        ErrorInCorrectnessOfNumericValue, остальные ошибки проходят как есть.
         """
         number: Decimal = self._checking_correctness_of_numeric_value(value)
 
